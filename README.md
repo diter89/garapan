@@ -49,8 +49,4 @@ Garapan dirancang untuk kemudahan penggunaan:
 
 <div align="center">
 
-Made with 💚 for the Crypto Community
-
-[⭐ Star this repo](https://github.com/yourusername/garapan) if you find it helpful!
-
 </div>
