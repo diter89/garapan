@@ -30,11 +30,6 @@ Transform your airdrop tracking experience with:
 # Clone repository
 git clone https://github.com/yourusername/garapan
 
-# Masuk ke direktori
-cd garapan
-
-# Jalankan aplikasi
-python3 garapan.py
 ```
 
 ## 💫 Usage
