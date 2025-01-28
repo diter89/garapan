@@ -49,4 +49,9 @@ Garapan dirancang untuk kemudahan penggunaan:
 
 <div align="center">
 
+
+https://github.com/user-attachments/assets/31853f6c-beb4-4d08-85d2-c3768b92acd1
+![Screenshot_2025-01-28_20-44-33](https://github.com/user-attachments/assets/e375f479-bd02-4cb2-83ac-090db60b38d5)
+
+
 </div>
