@@ -1,0 +1,326 @@
+#!/usr/bin/python3
+import os
+import sqlite3
+import json
+from datetime import datetime
+from InquirerPy import prompt
+from InquirerPy.utils import get_style
+from InquirerPy.base.control import Choice
+from InquirerPy.separator import Separator
+from rich.console import Console
+from rich.table import Table
+from rich import print, box
+from rich.panel import Panel
+from rich.align import Align 
+from prompt_toolkit import prompt as pt_prompt
+from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.shortcuts import CompleteStyle
+from rich.json import JSON
+
+# Initialize Rich console
+console = Console()
+
+# SQLite Database
+conn = sqlite3.connect("database.db")
+cursor = conn.cursor()
+
+# Definisikan style sebagai dictionary
+custom_style = {
+    "questionmark": "#e5c07b",
+    "answermark": "#e5c07b",
+    "answer": "#808080 italic",
+    "input": "#98c379",
+    "question": "",
+    "answered_question": "",
+    "instruction": "#abb2bf",
+    "long_instruction": "#abb2bf",
+    "pointer": "#61afef bold underline italic",
+    "checkbox": "#98c379",
+    "separator": "",
+    "skipped": "#5c6370",
+    "validator": "",
+    "marker": "#e5c07b",
+    "fuzzy_prompt": "#c678dd",
+    "fuzzy_info": "#abb2bf",
+    "fuzzy_border": "#4b5263",
+    "fuzzy_match": "#c678dd",
+    "spinner_pattern": "#e5c07b",
+    "spinner_text": "",
+}
+
+# Create Table
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS records (
+    timestamp TEXT PRIMARY KEY,  -- Kolom timestamp sebagai primary key
+    sumber_chanel TEXT NOT NULL,
+    nama_airdrop TEXT NOT NULL,
+    type TEXT NOT NULL,
+    wallet_email TEXT NOT NULL,
+    deskripsi TEXT NOT NULL
+)
+""")
+
+# banner
+
+banner = """
+╔═╗  ╔═╗  ╦═╗  ╔═╗  ╔═╗  ╔═╗  ╔╗╔ 
+║ ╦  ╠═╣  ╠╦╝  ╠═╣  ╠═╝  ╠═╣  ║║║ * Airdrop
+╚═╝  ╩ ╩  ╩╚═  ╩ ╩  ╩    ╩ ╩  ╝╚╝ 
+"""
+conn.commit()
+
+def multiline_input(prompt_message):
+    bindings = KeyBindings()
+
+    @bindings.add('c-d')
+    def _(event):
+        event.app.exit(result=event.app.current_buffer.text)
+
+    print(prompt_message)
+    text = pt_prompt(multiline=True, key_bindings=bindings, complete_style=CompleteStyle.MULTI_COLUMN)
+    return text
+
+def get_current_timestamp():
+    """Mengembalikan timestamp saat ini dalam format YYYY-MM-DD HH:MM:SS."""
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+'''
+def display_records():
+    """Show all records from the database in JSON format."""
+    cursor.execute("SELECT * FROM records")
+    data = cursor.fetchall()
+
+    if not data:
+        console.print("database.db kosong!", style="bold red")
+    else:
+        # Format data sebagai list of dictionaries
+        records = [
+            {
+                "timestamp": row[0],
+                "Sumber/Chanel": row[1],
+                "Nama Airdrop": row[2],
+                "Type Airdrop": row[3],
+                "Wallet/Email": row[4],
+                "Keterangan": row[5]
+            }
+            for row in data
+        ]
+        # Tampilkan data dalam format JSON
+        console.log(json.dumps(records, indent=4), highlight=True)
+        console.rule("END", style="#FF6666")
+'''
+
+def display_records():
+    """Show all records from the database in JSON format using Rich."""
+    cursor.execute("SELECT * FROM records")
+    data = cursor.fetchall()
+
+    if not data:
+        console.print("database.db kosong!", style="bold red")
+    else:
+        # Format data sebagai list of dictionaries
+        records = [
+            {
+                "timestamp": row[0],
+                "Sumber/Chanel": row[1],
+                "Nama Airdrop": row[2],
+                "Type Airdrop": row[3],
+                "Wallet/Email": row[4],
+                "Keterangan": row[5]
+            }
+            for row in data
+        ]
+
+        # Tampilkan data menggunakan Rich JSON
+        console.print(Panel.fit(JSON.from_data(records,indent=True), title="[green bold]Database Records", border_style="#808080 bold",box=box.DOUBLE))
+        
+def display_records00():
+    """Show all records from the database."""
+    cursor.execute("SELECT * FROM records")
+    data = cursor.fetchall()
+
+    table = Table(title="Database Records", show_lines=True, expand=False, border_style="#888888 bold", box=box.DOUBLE, header_style="#000000 bold on #808080")
+    table.add_column("Timestamp", style="#006666 bold", justify="left")
+    table.add_column("Sumber Chanel", style=" #61afef bold", justify="left")
+    table.add_column("Nama Airdrop", style="green bold", justify="left")
+    table.add_column("Type", style="yellow", justify="left")
+    table.add_column("Wallet/Email", style="cyan bold", justify="left")
+    table.add_column("Deskripsi", highlight=True, justify="left")
+
+    if not data:
+        console.print("Database is empty!", style="bold red")
+    else:
+        for row in data:
+            table.add_row(
+                row[0],  # Timestamp
+                row[1].upper(),  # Sumber Chanel
+                row[2],  # Nama Airdrop
+                row[3],  # Type
+                row[4],  # Wallet/Email
+                row[5]   # Deskripsi
+            )
+        console.print(table)
+
+def add_record():
+    """Add a new record."""
+    questions = [
+        {"type": "input", "name": "sumber_chanel", "message": "Masukkan sumber/chanel:"},
+        {"type": "input", "name": "nama_airdrop", "message": "Masukkan nama airdrop:"},
+        {"type": "input", "name": "type", "message": "Masukkan type (e.g.,testnet,depin,node,telegram,extension,quest web,social):"},
+        {"type": "input", "name": "wallet_email", "message": "Masukkan wallet/email yang di Gunakan untuk berpartisipasi:"}
+    ]
+    answers = prompt(questions)
+
+    # Gunakan input multiline untuk deskripsi
+    answers["deskripsi"] = multiline_input("Masukkan Keterangan (Ctrl+D untuk menyelesaikan):")
+
+    # Ambil timestamp saat ini
+    timestamp = get_current_timestamp()
+
+    cursor.execute("""
+        INSERT INTO records (timestamp, sumber_chanel, nama_airdrop, type, wallet_email, deskripsi)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (timestamp, answers["sumber_chanel"], answers["nama_airdrop"], answers["type"], answers["wallet_email"], answers["deskripsi"]))
+    conn.commit()
+    console.print("Record added successfully!", style="bold green")
+
+def update_record():
+    """Edit a record by timestamp."""
+    cursor.execute("SELECT * FROM records")
+    data = cursor.fetchall()
+
+    if not data:
+        console.print("No records found to edit!", style="bold red")
+        return
+
+    choices = [Choice(value=row[0], name=f"{row[0]} - {row[2]}") for row in data]  # Menampilkan Timestamp dan Nama Airdrop
+    question = [{"type": "list", "name": "record_timestamp", "message": "Pilih record untuk diedit:", "choices": choices}]
+    answer = prompt(question)
+
+    record_timestamp = answer["record_timestamp"]
+    questions = [
+        {"type": "input", "name": "sumber_chanel", "message": "Masukkan sumber chanel baru:"},
+        {"type": "input", "name": "nama_airdrop", "message": "Masukkan nama airdrop baru:"},
+        {"type": "input", "name": "type", "message": "Masukkan type baru:"},
+        {"type": "input", "name": "wallet_email", "message": "Masukkan wallet/email baru:"},
+        {"type": "input", "name": "deskripsi", "message": "Masukkan deskripsi baru:"}
+    ]
+    new_data = prompt(questions)
+
+    cursor.execute("""
+        UPDATE records
+        SET sumber_chanel = ?, nama_airdrop = ?, type = ?, wallet_email = ?, deskripsi = ?
+        WHERE timestamp = ?
+    """, (new_data["sumber_chanel"], new_data["nama_airdrop"], new_data["type"], new_data["wallet_email"], new_data["deskripsi"], record_timestamp))
+    conn.commit()
+    console.print("Record updated successfully!", style="bold green")
+
+def delete_record():
+    """Delete a record by timestamp."""
+    cursor.execute("SELECT * FROM records")
+    data = cursor.fetchall()
+
+    if not data:
+        console.print("No records found to delete!", style="bold red")
+        return
+
+    choices = [Choice(value=row[0], name=f"{row[0]} - {row[2]}") for row in data]  # Menampilkan Timestamp dan Nama Airdrop
+    question = [{"type": "list", "name": "record_timestamp", "message": "Pilih record untuk dihapus:", "choices": choices}]
+    answer = prompt(question)
+
+    record_timestamp = answer["record_timestamp"]
+    cursor.execute("DELETE FROM records WHERE timestamp = ?", (record_timestamp,))
+    conn.commit()
+    console.print("Record deleted successfully!", style="bold green")
+
+def search_records():
+    """Fuzzy search records by column."""
+    cursor.execute("SELECT * FROM records")
+    data = cursor.fetchall()
+
+    if not data:
+        console.print("No records found to search!", style="bold red")
+        return
+
+    # Buat pilihan kolom untuk pencarian
+    columns = ["timestamp", "sumber_chanel", "nama_airdrop", "type", "wallet_email", "deskripsi"]
+    column_question = [{"type": "list", "name": "column", "message": "Pilih kolom untuk mencari:", "choices": columns, "border": True}]
+    column_answer = prompt(column_question,style=custom_style)
+
+    # Ambil nilai unik dari kolom yang dipilih
+    unique_values = list(set(row[columns.index(column_answer["column"])] for row in data))
+
+    # Fuzzy search menggunakan InquirerPy
+    search_question = [{"type": "fuzzy", "name": "search_term", "message": f"Cari di kolom {column_answer['column']}:", "choices": unique_values, "border": True}]
+    search_answer = prompt(search_question,style=custom_style)
+
+    # Filter data berdasarkan hasil pencarian
+    filtered_data = [row for row in data if search_answer["search_term"].lower() in row[columns.index(column_answer["column"])].lower()]
+
+    if not filtered_data:
+        console.print("No matching records found!", style="bold red")
+    else:
+        table = Table(title="Search Results", show_lines=True, expand=False, border_style="#888888 bold", box=box.DOUBLE, header_style="#000000 bold on #808080")
+        table.add_column("Timestamp", style="#006666 bold", justify="left")
+        table.add_column("Sumber Chanel", style=" #61afef bold", justify="left")
+        table.add_column("Nama Airdrop", style="green bold", justify="left")
+        table.add_column("Type", style="yellow", justify="left")
+        table.add_column("Wallet/Email", style="cyan bold", justify="left")
+        table.add_column("Deskripsi", highlight=True, justify="left")
+
+        for row in filtered_data:
+            table.add_row(
+                row[0],  # Timestamp
+                row[1].upper(),  # Sumber Chanel
+                row[2],  # Nama Airdrop
+                row[3],  # Type
+                row[4],  # Wallet/Email
+                row[5]   # Deskripsi
+            )
+        console.print(table)
+
+def callbanner():
+    console.print(Panel(Align.center("%s"%(banner)),border_style="#808080 bold"))
+
+def main_menu():
+    """Main menu."""
+    while True:
+        options = [
+            Choice(value="view", name="View Records     ----    Melihat semua data dalam database"),
+            Choice(value="tview", name="Table Record     ----    Mengubah data berdasarkan timestamp"),
+            Choice(value="add", name="Add Record       ----    Menambahkan data baru ke database"),
+            Choice(value="edit", name="Edit Record      ----    Mengubah data berdasarkan timestamp"),
+            Choice(value="delete", name="Delete Record    ----    Menghapus data berdasarkan timestamp"),
+            Choice(value="search", name="Search Record    ----    Cari data menggunakan fuzzy search"),
+            Choice(value="exit", name="Exit             ----    Keluar dari aplikasi"),
+            Choice(value="clearS", name="Clear Screen     ----    Menghapus layar")
+        ]
+        question = [{"type": "list", "name": "action", "message": "Pilih opsi:", "choices": options, "border": True}]
+        answer = prompt(questions=question, style=custom_style)
+
+        if answer["action"] == "view":
+            display_records()
+        elif answer["action"] == "tview":
+            display_records00()
+        elif answer["action"] == "add":
+            add_record()
+        elif answer["action"] == "edit":
+            update_record()
+        elif answer["action"] == "delete":
+            delete_record()
+        elif answer["action"] == "search":
+            search_records()
+        elif answer["action"] == "clearS":
+            ClearScreen()
+        elif answer["action"] == "exit":
+            console.print("exit", style="bold blue")
+            break
+
+def ClearScreen():
+    os.system("clear")
+
+if __name__ == "__main__":
+    ClearScreen()
+    callbanner()
+    main_menu()
+    conn.close()
