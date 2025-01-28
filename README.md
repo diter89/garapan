@@ -28,7 +28,7 @@ Transform your airdrop tracking experience with:
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/garapan
+git clone https://github.com/diter89/garapan
 
 ```
 
