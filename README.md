@@ -47,12 +47,6 @@ Garapan dirancang untuk kemudahan penggunaan:
 - Text-based interface
 - Local storage system
 
-## 📜 License
-
-MIT License - feel free to use for personal or commercial projects.
-
----
-
 <div align="center">
 
 Made with 💚 for the Crypto Community
